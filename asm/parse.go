@@ -4,18 +4,19 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"vm/vm"
 )
 
-func MustParseLine(line string) (uint32, bool) {
-	code, ok, err := ParseLine(line)
+func MustParseLine(line string, registry *vm.Registry) (uint64, bool) {
+	code, ok, err := ParseLine(line, registry)
 	if err != nil {
 		panic(err)
 	}
 	return code, ok
 }
 
-func ParseLine(line string) (uint32, bool, error) {
-	fields := strings.Fields(strings.ToLower(line))
+func ParseLine(line string, registry *vm.Registry) (uint64, bool, error) {
+	fields := strings.Fields(line)
 	idx := slices.IndexFunc(fields, func(s string) bool {
 		return strings.HasPrefix(s, "//")
 	})
@@ -27,10 +28,10 @@ func ParseLine(line string) (uint32, bool, error) {
 		return 0, false, nil
 	}
 	name := fields[0]
-	opcode, ok := instructions[name]
+	data, ok := registry.FromName(name)
 	if !ok {
 		return 0, false, fmt.Errorf("unknown opcode: %s", name)
 	}
-	op, err := opcode.Parse(fields[1:])
-	return op, true, err
+	word, err := Parser{fields[1:]}.Parse(data)
+	return word, true, err
 }

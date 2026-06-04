@@ -1,84 +1,83 @@
 package vm
 
+import "math"
+
 var _ Instruction = Inc
 
-func Inc(_ *VM, dst *uint32, _ uint32, _ uint32, _ uint16) {
+func Inc(_ *VM, dst *uint64, _ uint64, _ uint64, _ uint16, _ uint32) {
 	*dst++
 }
 
 var _ Instruction = Dec
 
-func Dec(_ *VM, dst *uint32, _ uint32, _ uint32, _ uint16) {
+func Dec(_ *VM, dst *uint64, _ uint64, _ uint64, _ uint16, _ uint32) {
 	*dst--
 }
 
-var _ Instruction = AddUint12Immediate
+var _ Instruction = AddImmediate
 
-// AddUint12Immediate adds data to dst.
-func AddUint12Immediate(_ *VM, dst *uint32, _, _ uint32, data uint16) {
-	*dst += uint32(data)
+// AddImmediate adds data to dst.
+func AddImmediate(_ *VM, dst *uint64, _, _ uint64, _ uint16, data uint32) {
+	*dst += uint64(data)
 }
 
-var _ Instruction = SubUint12Immediate
+var _ Instruction = SubImmediate
 
-// SubUint12Immediate subtracts data from dst.
-func SubUint12Immediate(_ *VM, dst *uint32, _, _ uint32, data uint16) {
-	*dst -= uint32(data)
+// SubImmediate subtracts data from dst.
+func SubImmediate(_ *VM, dst *uint64, _, _ uint64, _ uint16, data uint32) {
+	*dst -= uint64(data)
 }
 
 var _ Instruction = Add
 
-func Add(_ *VM, dst *uint32, src1, src2 uint32, flags uint16) {
+func Add(_ *VM, dst *uint64, src1, src2 uint64, flags uint16, _ uint32) {
 	switch {
 	case (flags & FlagUnsigned) != 0:
 		*dst = src1 + src2
 	case (flags & FlagFloat) != 0:
-		*float(dst) = *float(&src1) + *float(&src2)
+		*dst = math.Float64bits(math.Float64frombits(src1) + math.Float64frombits(src2))
 	default:
-		*signed(dst) = *signed(&src1) + *signed(&src2)
+		*dst = uint64(int64(src1) + int64(src2))
 	}
 }
 
 var _ Instruction = Sub
 
-func Sub(_ *VM, dst *uint32, src1, src2 uint32, flags uint16) {
+func Sub(_ *VM, dst *uint64, src1, src2 uint64, flags uint16, _ uint32) {
 	switch {
 	case (flags & FlagUnsigned) != 0:
 		*dst = src1 - src2
 	case (flags & FlagFloat) != 0:
-		*float(dst) = *float(&src1) - *float(&src2)
+		*dst = math.Float64bits(math.Float64frombits(src1) - math.Float64frombits(src2))
 	default:
-		*signed(dst) = *signed(&src1) - *signed(&src2)
+		*dst = uint64(int64(src1) - int64(src2))
 	}
 }
 
 var _ Instruction = Mul
 
 // Mul performs multiplication.
-func Mul(_ *VM, dst *uint32, src1, src2 uint32, flags uint16) {
+func Mul(_ *VM, dst *uint64, src1, src2 uint64, flags uint16, _ uint32) {
 	switch {
 	case (flags & FlagUnsigned) != 0:
 		*dst = src1 * src2
 	case (flags & FlagFloat) != 0:
-		*float(dst) = *float(&src1) * *float(&src2)
+		*dst = math.Float64bits(math.Float64frombits(src1) * math.Float64frombits(src2))
 	default:
-		*signed(dst) = *signed(&src1) * *signed(&src2)
+		*dst = uint64(int64(src1) * int64(src2))
 	}
 }
 
 var _ Instruction = Div
 
 // Div performs division.
-func Div(_ *VM, dst *uint32, src1, src2 uint32, flags uint16) {
+func Div(_ *VM, dst *uint64, src1, src2 uint64, flags uint16, _ uint32) {
 	switch {
 	case (flags & FlagUnsigned) != 0:
 		*dst = src1 / src2
 	case (flags & FlagFloat) != 0:
-		*float(dst) = *float(&src1) / *float(&src2)
+		*dst = math.Float64bits(math.Float64frombits(src1) / math.Float64frombits(src2))
 	default:
-		*signed(dst) = *signed(&src1) / *signed(&src2)
+		*dst = uint64(int64(src1) / int64(src2))
 	}
 }
-
-var signed = cast[uint32, int32]
-var float = cast[uint32, float32]
