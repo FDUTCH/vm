@@ -4,8 +4,17 @@ import "vm/memory"
 
 var _ Instruction = Call
 
-// Call calls function from dst addr.
-func Call(vm *VM, dst *uint64, _, _ uint64, _ uint16, _ uint32) {
+// Call calls function from data.
+func Call(vm *VM, _ *uint64, _, _ uint64, _ uint16, data uint32) {
+	currentAddr := vm.registers[memory.ProgramCounterReg]
+	vm.stack.PushUint64(currentAddr)
+	vm.registers[memory.ProgramCounterReg] = uint64(data)
+}
+
+var _ Instruction = CallAddr
+
+// CallAddr calls function from dst addr.
+func CallAddr(vm *VM, dst *uint64, _, _ uint64, _ uint16, _ uint32) {
 	currentAddr := vm.registers[memory.ProgramCounterReg]
 	vm.stack.PushUint64(currentAddr)
 	vm.registers[memory.ProgramCounterReg] = *dst

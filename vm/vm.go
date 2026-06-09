@@ -1,8 +1,6 @@
 package vm
 
 import (
-	"encoding/binary"
-	"fmt"
 	"io"
 	"os"
 	"vm/memory"
@@ -26,9 +24,8 @@ type VM struct {
 	stdOut io.Writer
 }
 
-func NewVM(regions []memory.Region, options ...Option) (*VM, error) {
+func NewVM(program []uint64, regions []memory.Region, options ...Option) (*VM, error) {
 	var (
-		program memory.Region
 		static  memory.Region
 		dynamic memory.Region
 		stack   memory.Region
@@ -38,8 +35,6 @@ func NewVM(regions []memory.Region, options ...Option) (*VM, error) {
 		switch {
 		case rg.Flags.Write():
 			dynamic = rg
-		case rg.Flags.Exec():
-			program = rg
 		case rg.Flags.Stack():
 			stack = rg
 		default:
@@ -47,17 +42,8 @@ func NewVM(regions []memory.Region, options ...Option) (*VM, error) {
 		}
 	}
 
-	if len(program.Data)%8 != 0 {
-		return nil, fmt.Errorf("invalid program alignment")
-	}
-
-	p := make([]uint64, 0, len(program.Data)/8)
-	for i := 0; i < len(program.Data); i += 8 {
-		p = append(p, binary.LittleEndian.Uint64(program.Data[i:i+8]))
-	}
-
 	vm := &VM{
-		program: p,
+		program: program,
 		stack:   stack,
 		static:  static,
 		dynamic: dynamic,
