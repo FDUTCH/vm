@@ -63,6 +63,15 @@ func (l *Linker) Link(tokens []tokenizer.Token) (instructions []tokenizer.Instru
 	return instructions, l.static.Bytes(), l.dynamic.Bytes(), nil
 }
 
+func (l *Linker) Symbols() map[string]uint32 {
+	return l.symbols
+}
+
+func (l *Linker) Symbol(name string) (uint32, bool) {
+	val, ok := l.symbols[name]
+	return val, ok
+}
+
 func (l *Linker) handleVariable(v tokenizer.VariableDecl) error {
 	val, ok := l.registry.Get(v.Type)
 	if !ok {

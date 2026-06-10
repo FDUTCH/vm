@@ -1,9 +1,9 @@
     LoadImmediate r2 hello
-Cycle:
+main.Cycle:
 	LoadByte r4 r2 $S // loading char from static region
 	Inc r2 // incrementing pointer
 	Equal r5 r4 r1 // comparing chars
-	JumpConditionalImmediate r5 Cycle // jumping if r5 != 0
+	JumpConditionalImmediate r5 main.Cycle // jumping if r5 != 0
 	Write r6 r2 $S // writing to stdout
 	LoadImmediate r1 1 // загружаем 1 в r1
 	WriteStatus r1 // пишем r1 как статус

@@ -44,10 +44,18 @@ func (r Recognizer) Add(tok rune, str string, registry *vm.Registry, pos scanner
 	switch tok {
 	case ':':
 		return []Token{Label{r.ident}}, Recognizer{}, nil
+	case '.': // handling symbols with dot.
+		return nil, DottedLabelParser{first: r.ident}, nil
 	case scanner.Ident:
 		data, ok := registry.FromName(r.ident)
 		if ok {
-			return InstructionParser{name: r.ident, line: pos.Line, data: data, registersToParse: data.ParamCount, hasFlags: data.HasFlags}.Add(tok, str, registry, pos)
+			return InstructionParser{
+				name:             r.ident,
+				line:             pos.Line,
+				data:             data,
+				registersToParse: data.ParamCount,
+				hasFlags:         data.HasFlags,
+			}.Add(tok, str, registry, pos)
 		}
 	}
 	return nil, nil, ErrorUnexpected{str}

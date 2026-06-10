@@ -8,16 +8,16 @@ import (
 )
 
 type InstructionParser struct {
-	name                          string
-	line                          int
-	data                          vm.InstructionData
-	registersToParse              int
-	hasFlags, flagSym, dataParsed bool
-	Dst                           byte
-	Src1                          byte
-	Src2                          byte
-	Flags                         uint16
-	Data                          Reference[uint32]
+	name                                     string
+	line                                     int
+	data                                     vm.InstructionData
+	registersToParse                         int
+	hasFlags, flagSym, dataParsed, dottedRef bool
+	Dst                                      byte
+	Src1                                     byte
+	Src2                                     byte
+	Flags                                    uint16
+	Data                                     Reference[uint32]
 }
 
 func (i InstructionParser) Add(tok rune, str string, registry *vm.Registry, pos scanner.Position) ([]Token, Parser, error) {
@@ -41,35 +41,48 @@ func (i InstructionParser) Add(tok rune, str string, registry *vm.Registry, pos 
 		case 3:
 			i.Src2, err = parseRegister(str)
 		}
-		goto checkComplete
+		goto end
 	}
 
-	if i.hasFlags && str == "$" {
+	// it means we left part of a data after dot.
+	if i.data.HasData && i.dataParsed && tok == '.' && !i.dottedRef && i.Data.NeedsValue() {
+		i.dottedRef = true
+		goto end
+	}
+
+	// adding leftover part of the data.
+	if i.dottedRef {
+		i.Data = NewReferenceWithName[uint32](i.Data.Name() + "." + str)
+		goto end
+	}
+
+	// it means that we have a flag to parse.
+	if i.hasFlags && tok == '$' {
 		i.hasFlags = false
 		i.flagSym = true
-		goto checkComplete
+		goto end
 	}
 
+	// parsing flag.
 	if i.flagSym {
 		i.flagSym = false
 		var ok bool
 		i.Flags, ok, err = parseFlags(str)
 		if err != nil || ok {
-			goto checkComplete
+			goto end
 		}
 	}
 
+	// parsing data.
 	if i.data.HasData && !i.dataParsed {
 		i.dataParsed = true
 		i.Data, err = parseData(str)
-		goto checkComplete
+		goto end
 	}
 
-checkComplete:
-	if i.data.HasData == i.dataParsed && err == nil && i.registersToParse == 0 && !i.data.HasFlags {
-		return []Token{i.Instruction()}, Recognizer{}, nil
-	}
-
+	// if str doesn't match any condition...
+	return nil, nil, ErrorUnexpected{str}
+end:
 	return nil, i, err
 }
 

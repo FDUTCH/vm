@@ -22,7 +22,7 @@ func (v VariableDecl) Name() string {
 	return v.name
 }
 
-func (v VariableDecl) Add(tok rune, str string, registry *vm.Registry, pos scanner.Position) ([]Token, Parser, error) {
+func (v VariableDecl) Add(tok rune, str string, _ *vm.Registry, pos scanner.Position) ([]Token, Parser, error) {
 	// finish...
 	if pos.Line == -1 {
 		if v.state != 6 {
