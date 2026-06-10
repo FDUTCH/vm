@@ -1,27 +1,19 @@
 package instruction
 
 import (
+	_ "embed"
 	"os"
 	"testing"
 	"vm/asm"
 	"vm/asm/linker"
-	"vm/asm/tokenizer"
 	"vm/memory"
 	"vm/vm"
 )
 
+//go:embed hello_world.some
+var data string
+
 func TestRunVM(t *testing.T) {
-	data := `
-		LoadImmediate r2 hello
-Cycle:
-		LoadByte r4 r2 $S // loading char from static region
-		Inc r2 // incrementing pointer
-		Equal r5 r4 r1 // comparing chars
-		JumpConditionalImmediate r5 Cycle // jumping if r5 != 0
-		Write r6 r2 $S // writing to stdout 
-		LoadImmediate r1 1 // загружаем 1 в r1
-		WriteStatus r1 // пишем r1 как статус
-	`
 
 	reg := vm.DefaultRegistry()
 
@@ -31,12 +23,7 @@ Cycle:
 	}
 
 	l := linker.New(linker.DefaultTypeRegistry())
-	instructions, static, dynamic, err := l.Link(append(tokens, tokenizer.NewVariableDecl(
-		true,
-		"hello",
-		"str",
-		"\"Hello World!!!\n\u0000\"",
-	)))
+	instructions, static, dynamic, err := l.Link(tokens)
 	if err != nil {
 		t.Fatal(err)
 	}
